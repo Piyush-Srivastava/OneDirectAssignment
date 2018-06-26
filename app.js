@@ -2,11 +2,6 @@
 var express = require("express");
 var app = express();
 
-//intialize the twitter api
-var Twit = require("twit");
-var config = require('./config');
-var T = new Twit(config);
-
 //getting the session
 var session = require('express-session');
 app.use(session({secret: "enter custom sessions secret here"}));
@@ -37,17 +32,18 @@ var passport = require('passport')
   function(token, tokenSecret, profile, cb) {
     if (profile) {
         var screen_name = profile;
-        oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?screen_name=' + screen_name + '&count=5'
+        oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=' + screen_name + '&count=20'
                   , token
                   , tokenSecret
                   , function (e, data, result){
                       if (e) console.error(e); 
-                      for(i=0;i<5;i++)
+                      for(i=0;i<20;i++)
                        {
                            console.log((JSON.parse(data))[i].user['name']);
-                           console.log((JSON.parse(data))[i].text);
-                           console.log(((JSON.parse(data))[i].entities['urls'][0]));
-                           console.log(((JSON.parse(data))[i].entities['urls'][0])['expanded_url']);
+                           console.log((JSON.parse(data))[i].full_text);
+                           if(((JSON.parse(data))[i].entities['urls']).length>0)
+                              console.log(((JSON.parse(data))[i].entities['urls'][0])['expanded_url']);
+                          //  console.log(((JSON.parse(data))[i].entities['urls'][0])['unwound']);
                            console.log('-----------------------------------------');
                         }
                     
