@@ -43,7 +43,6 @@ var passport = require('passport')
                            console.log((JSON.parse(data))[i].full_text);
                            if(((JSON.parse(data))[i].entities['urls']).length>0)
                               console.log(((JSON.parse(data))[i].entities['urls'][0])['expanded_url']);
-                          //  console.log(((JSON.parse(data))[i].entities['urls'][0])['unwound']);
                            console.log('-----------------------------------------');
                         }
                     
