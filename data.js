@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+ 
 var Schema = mongoose.Schema;
 
 var tweetSchema = new Schema({
@@ -19,12 +19,12 @@ var tweetSchema = new Schema({
 
     TweetContentUrl: {
         type:String,
-        default: null
+        default: null,
+        unique: true
     }
     
 })
 // var Tweet = mongoose.model('Tweet', tweetSchema);
-
 module.exports = {
     tweetSchema
 };

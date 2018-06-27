@@ -1,16 +1,22 @@
 
 var express = require("express");
 var app = express();
+
 var bodyParser = require("body-parser");
 var db = '';
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var  mongoose = require('mongoose');
-
+// var uniqueValidator = require('mongoose-unique-validator');
+const beautifyUnique = require('mongoose-beautiful-unique-validation');
 mongoose.Promise = global.Promise;
+
 
 mongoose.connect('mongodb://localhost:27017/OneDirectApp');
 var tweetSchema = require('./data').tweetSchema;
+tweetSchema.plugin(beautifyUnique);
+
+// tweetSchema.plugin(uniqueValidator);
 
 
 const hbs = require('hbs');//handle bar
@@ -80,14 +86,10 @@ app.post('/',(req, res) => {
                                       TwitterId: (JSON.parse(data))[i].user['screen_name'],
                                       TweetContentUrl: ((JSON.parse(data))[i].entities['urls'][0])['expanded_url']
                                     });
-                                    //save to database
-                                      newTweet.save(function(error) {
-                                        console.log("data inserted");
-                                        if(error){
-                                          console.log(error);
-                                        }
-                                              
-                                              });
+                        
+                                      newTweet.save()
+                                          .then(() => console.log('Success saving!'))
+                                          .catch(err => {});
                                       }
                       
                   }
