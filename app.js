@@ -1,11 +1,16 @@
 
 var express = require("express");
 var app = express();
+var bodyParser = require("body-parser");
 var db = '';
-
+app.use(bodyParser.urlencoded({ extended: true }));
 //initializing mongoDB
 const MongoClient = require('mongodb');
 
+const hbs = require('hbs');//handle bar
+app.set('view engine','hbs');//to set the view engine to hbs
+
+var username = '';
 
 //connect to database
 MongoClient.connect('mongodb://localhost:27017',(err, client) => {
@@ -41,7 +46,12 @@ var oauth = new OAuth.OAuth( 'https://api.twitter.com/oauth/request_token'
 var passport = require('passport')
   , TwitterStrategy = require('passport-twitter').Strategy;
  
+app.post('/',(req, res) => {
+ username = req.body.username;
+  console.log(username);
+  res.redirect('/auth/twitter');
 
+});
   passport.use(new TwitterStrategy({
     consumerKey: 'FjT9B0QnDjdCqNX3oqZvrW6cT',
     consumerSecret: 'mupq2XqLd3QdA6KzMHFzIb8VVRAvY9vPxSBiCAlrMJOQs8V8wS',
@@ -49,14 +59,19 @@ var passport = require('passport')
   },
   function(token, tokenSecret, profile, cb) {
     if (profile) {
-      
-        var screen_name = profile.username;
-        oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=' + screen_name + '&count=5'
+      if(profile.username !== username)
+        console.log("Error");
+      else {
+      console.log(profile.username);
+        var screen_name = username;
+        console.log(screen_name);
+        var count = 100;
+        oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=7PrinceKumar&count=200'
                   , token
                   , tokenSecret
                   , function (e, data, result){
                       if (e) console.error(e); 
-                       for(i=0;i<5;i++)
+                       for(i=0;i<100;i++)
                        {
                         if(((JSON.parse(data))[i].entities['urls']).length>0){
                            db.collection('Urls').insertOne({
@@ -73,6 +88,7 @@ var passport = require('passport')
                   });
                   return cb(null,profile);
                    }
+                  }
                    
     
                   
@@ -95,8 +111,8 @@ passport.deserializeUser(function(obj, cb) {
 
 
 
-app.get('/home', (req,res) => {
-  res.send("Home");
+app.get('/', (req,res) => {
+  res.render("home.hbs");
 });
 
 //to redirect to authentication page of twitter
@@ -107,13 +123,8 @@ app.get('/auth/twitter',
 app.get('/auth/twitter/callback', 
   passport.authenticate('twitter', { failureRedirect: '/login'}),
   function(req, res) {
-    console.log(req);
     res.redirect('/home');
   });
-
-  // app.get('/auth/twitter/callback',(req, res) => {
-  //   res.send("Done");
-  // })
 
   app.get('/auth/logout', function(req, res){
     req.logOut();
@@ -128,11 +139,6 @@ app.get('/auth/twitter/callback',
   app.listen(3000, () => {
       console.log("Connection Successful");
   });
-
-  // function ensureAuthenticated(req, res, next) {
-  //   if (req.isAuthenticated()) { return next(); }
-  //   res.redirect('/login')
-  // }
 
 
 
