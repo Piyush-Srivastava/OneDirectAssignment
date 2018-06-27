@@ -4,24 +4,19 @@ var app = express();
 var bodyParser = require("body-parser");
 var db = '';
 app.use(bodyParser.urlencoded({ extended: true }));
-//initializing mongoDB
-const MongoClient = require('mongodb');
+
+var  mongoose = require('mongoose');
+
+mongoose.Promise = global.Promise;
+
+mongoose.connect('mongodb://localhost:27017/OneDirectApp');
+var tweetSchema = require('./data').tweetSchema;
+
 
 const hbs = require('hbs');//handle bar
 app.set('view engine','hbs');//to set the view engine to hbs
 
 var username = '';
-
-//connect to database
-MongoClient.connect('mongodb://localhost:27017',(err, client) => {
-    if(err) {
-        return console.log('Unable to connect to MongoDB server');
-    }
-    console.log('Connected to MongoDB server');
-    db = client.db('OneDirectApp');
-});
-
-
 
 
 //getting the session
@@ -64,34 +59,42 @@ app.post('/',(req, res) => {
       else {
       console.log(profile.username);
         var screen_name = username;
+        
         console.log(screen_name);
+        var Tweet = mongoose.model(profile.username, tweetSchema, profile.username);
         var count = 100;
         oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=7PrinceKumar&count=200'
                   , token
                   , tokenSecret
                   , function (e, data, result){
                       if (e) console.error(e); 
-                       for(i=0;i<100;i++)
+                       for(i=0;i<10;i++)
                        {
+                        
                         if(((JSON.parse(data))[i].entities['urls']).length>0){
-                           db.collection('Urls').insertOne({
-                             TwitterId: (JSON.parse(data))[i].user['screen_name'],
-                             TweetContentUrl: ((JSON.parse(data))[i].entities['urls'][0])['expanded_url']
-                           },(err, result) => {
-                            if(err){
-                                return  console.log('Unable to insert url', err);
-                            }
-                            console.log(JSON.stringify(result.ops,undefined, 2));
-                          });
-                        }
-                      }
+                              
+                                   var newTweet = new Tweet({
+                            
+                                      TweetId:  (JSON.parse(data))[i].user['id'],
+                                      TimeStamp: (JSON.parse(data))[i].user['created_at'],
+                                      TwitterId: (JSON.parse(data))[i].user['screen_name'],
+                                      TweetContentUrl: ((JSON.parse(data))[i].entities['urls'][0])['expanded_url']
+                                    });
+                                    //save to database
+                                      newTweet.save(function(error) {
+                                        console.log("data inserted");
+                                        if(error){
+                                          console.log(error);
+                                        }
+                                              
+                                              });
+                                      }
+                      
+                  }
                   });
                   return cb(null,profile);
                    }
                   }
-                   
-    
-                  
         else {
             console.log("Authentication failed.")
         }
