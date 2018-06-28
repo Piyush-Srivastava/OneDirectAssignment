@@ -11,7 +11,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 var  mongoose = require('mongoose');
 const beautifyUnique = require('mongoose-beautiful-unique-validation');
-mongoose.Promise = global.Promise;
 
 
 mongoose.connect('mongodb://localhost:27017/OneDirectApp');
@@ -70,13 +69,13 @@ app.post('/',(req, res) => {
         var Tweet = mongoose.model(profile.username, tweetSchema, profile.username);
         var count = 100;
         tableName = Tweet;
-        console.log(typeof(tableName));
         oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=7PrinceKumar&count=200'
                   , token
                   , tokenSecret
                   , function (e, data, result){
                       if (e) console.error(e); 
-                       for(i=0;i<10;i++)
+                      var data_size = JSON.parse(data).length;
+                       for(i=0;i<data_size;i++)
                        {
                         
                         if(((JSON.parse(data))[i].entities['urls']).length>0){
@@ -91,7 +90,7 @@ app.post('/',(req, res) => {
                         
                                       newTweet.save()
                                           .then(() => console.log('Success saving!'))
-                                          .catch(err => {});
+                                          .catch(err => {console.log("DUPLICATE")});
                                       }
                       
                   }
@@ -122,15 +121,8 @@ app.get('/', (req,res) => {
   res.render("home.hbs");
 });
 
-app.get('/show', (req,res) => {
-  tableName.find({}, function(err,tweets) {
-    if(err)
-      console.log(err);
-    res.render("home.hbs");
-    // else  
-      // console.log(tweets);
-  })
-});
+var done = true;
+
 
 //to redirect to authentication page of twitter
 app.get('/auth/twitter',
@@ -143,13 +135,25 @@ app.get('/auth/twitter/callback',
     res.redirect('/show');
   });
 
-  app.get('/auth/logout', function(req, res){
-    req.logOut();
-    req.session.destroy();
-    req.user=null;
-    res.redirect('/');
+  app.get('/show', function (req,res) {
+    tableName.find({}, function(err,tweets) {
+      if(err)
+        {
+          console.log(err);
+        }
+        else{
+      if(done)
+        {
+          done = false;
+          res.redirect('/show');
+          return;
+        }
+      res.render("show.hbs", {tweetList: tweets});
+      }
+      // else  
+        // console.log(tweets);
+    })
   });
-  
 
  
 
