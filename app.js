@@ -1,3 +1,4 @@
+//---------------------------------------------- SERVER -----------------------------------------------
 
 var express = require("express");
 var app = express();
@@ -11,12 +12,11 @@ var bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-
 //----------------------------------------------MONGOOSE CLIENT----------------------------------------
 var  mongoose = require('mongoose');
 const beautifyUnique = require('mongoose-beautiful-unique-validation');//for unique url validation
 mongoose.connect('mongodb://localhost:27017/OneDirectApp');
-var tweetSchema = require('./data').tweetSchema;
+var tweetSchema = require('./schema').tweetSchema;
 tweetSchema.plugin(beautifyUnique);
 
 
@@ -25,7 +25,7 @@ const hbs = require('hbs');//handle bar
 app.set('view engine','hbs');//to set the view engine to hbs
 
 var username = '';
-var tableName = '';
+var tableName = "";
 
 
 //getting the session
@@ -63,7 +63,10 @@ var passport = require('passport')
   function(token, tokenSecret, profile, cb) {
     if (profile) {
       if(profile.username.toLowerCase() !== username.toLowerCase())//making username case insensitive
-        console.log("Error");
+        { errorMessage  = "You are not authorized to access this account. Please login with the given account on Twitter.";
+          console.log("Error");
+        
+      }
       else {
       console.log(profile.username);
         var screen_name = username;
@@ -124,14 +127,6 @@ passport.deserializeUser(function(obj, cb) {
 
 //---------------------------------------------- ROUTES -----------------------------------------------
 
-app.post('/',(req, res) => {
-  username = req.body.username;
-   console.log(username);
-   res.redirect('/auth/twitter');
- 
- });
-
-
 app.get('/', (req,res) => {
   res.render("home.hbs");
 });
@@ -140,28 +135,46 @@ app.get('/', (req,res) => {
 app.get('/auth/twitter',
   passport.authenticate('twitter'));
 
+
 //on completion of authentication
 app.get('/auth/twitter/callback', 
-  passport.authenticate('twitter', { failureRedirect: '/login'}),
-  function(req, res) {
-    res.redirect('/show');
-  });
+passport.authenticate('twitter', { failureRedirect: '/login'}),
+function(req, res) {
+  res.redirect('/showDB');
+});
 
-  app.get('/show', function (req,res) {
-    tableName.find({}, function(err,tweets) {
-      if(err)
-        {
-          console.log(err);
-        }
+app.get('/showDB', function (req,res) {
+  if(tableName==null)//Not Working
+  {
+    res.redirect('/');
+    return;
+  }
+  tableName.find({}, function(err,tweets) {
+    if(err)
+      {
+        console.log(err);
+      }
 
-      res.render("show.hbs", {tweetList: tweets});
+    res.render("show.hbs", {tweetList: tweets});
 
-    })
-  });
+  })
+});
 
+app.get('/error',(req,res) => {
+  res.send("ERROR");
+})
+
+
+
+app.post('/',(req, res) => {
+  username = req.body.username;
+   console.log(username);
+   res.redirect('/auth/twitter');
  
+ });
 
-  app.listen(3000, () => {
+
+app.listen(3000, () => {
       console.log("Connection Successful");
   });
 

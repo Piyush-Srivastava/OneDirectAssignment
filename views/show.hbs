@@ -7,6 +7,7 @@
     </head>
 
     <body>
+        
         <h1 align="center">BOOKMARKED URLS</h1>
 
 <!--Table-->
@@ -33,7 +34,7 @@
             <th scope="row">{{@index}}</th>
             <td> {{TimeStamp }}</td>
 			<td> {{TwitterId }}</td>
-			<td> <a href={{TweetContentUrl}}>{{TweetContentUrl}}</a></td>
+			<td style="text-decoration: underline"> <a href={{TweetContentUrl}}>{{TweetContentUrl}}</a></td>
                    
         </tr>
         {{/each}}
