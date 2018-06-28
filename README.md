@@ -35,7 +35,7 @@ Please head onto this url to get the necessary steps to install mongoDB https://
 5. run `node app.js`
 6. Enter the username when prompted. Make sure you're either logged in with the same username on Twitter or logged out.
 
-##Screenshots
+## Screenshots
 
 1. Login Screen
 
