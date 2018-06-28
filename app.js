@@ -1,13 +1,15 @@
 
 var express = require("express");
 var app = express();
+const path = require('path');
+const publicPath = path.join(__dirname, './views');
+app.use('/', express.static(publicPath));
 
 var bodyParser = require("body-parser");
 var db = '';
 app.use(bodyParser.urlencoded({ extended: true }));
 
 var  mongoose = require('mongoose');
-// var uniqueValidator = require('mongoose-unique-validator');
 const beautifyUnique = require('mongoose-beautiful-unique-validation');
 mongoose.Promise = global.Promise;
 
@@ -16,13 +18,12 @@ mongoose.connect('mongodb://localhost:27017/OneDirectApp');
 var tweetSchema = require('./data').tweetSchema;
 tweetSchema.plugin(beautifyUnique);
 
-// tweetSchema.plugin(uniqueValidator);
-
 
 const hbs = require('hbs');//handle bar
 app.set('view engine','hbs');//to set the view engine to hbs
 
 var username = '';
+var tableName = '';
 
 
 //getting the session
@@ -60,15 +61,16 @@ app.post('/',(req, res) => {
   },
   function(token, tokenSecret, profile, cb) {
     if (profile) {
-      if(profile.username !== username)
+      if(profile.username.toLowerCase() !== username.toLowerCase())
         console.log("Error");
       else {
       console.log(profile.username);
         var screen_name = username;
-        
         console.log(screen_name);
         var Tweet = mongoose.model(profile.username, tweetSchema, profile.username);
         var count = 100;
+        tableName = Tweet;
+        console.log(typeof(tableName));
         oauth.get( 'https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended&screen_name=7PrinceKumar&count=200'
                   , token
                   , tokenSecret
@@ -82,7 +84,7 @@ app.post('/',(req, res) => {
                                    var newTweet = new Tweet({
                             
                                       TweetId:  (JSON.parse(data))[i].user['id'],
-                                      TimeStamp: (JSON.parse(data))[i].user['created_at'],
+                                      TimeStamp: (JSON.parse(data))[i].created_at,
                                       TwitterId: (JSON.parse(data))[i].user['screen_name'],
                                       TweetContentUrl: ((JSON.parse(data))[i].entities['urls'][0])['expanded_url']
                                     });
@@ -120,6 +122,16 @@ app.get('/', (req,res) => {
   res.render("home.hbs");
 });
 
+app.get('/show', (req,res) => {
+  tableName.find({}, function(err,tweets) {
+    if(err)
+      console.log(err);
+    res.render("home.hbs");
+    // else  
+      // console.log(tweets);
+  })
+});
+
 //to redirect to authentication page of twitter
 app.get('/auth/twitter',
   passport.authenticate('twitter'));
@@ -128,7 +140,7 @@ app.get('/auth/twitter',
 app.get('/auth/twitter/callback', 
   passport.authenticate('twitter', { failureRedirect: '/login'}),
   function(req, res) {
-    res.redirect('/home');
+    res.redirect('/show');
   });
 
   app.get('/auth/logout', function(req, res){
